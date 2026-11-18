@@ -147,7 +147,8 @@
              over50: nums.filter(function (x) { return x > 50; }).length };
   }
 
-  function fmt(x) { return (Math.round(x * 100) / 100).toFixed(2); }
+  // 소수점 셋째 자리까지, 끝의 0은 지움 (18.925 → 18.925, 20 → 20)
+  function fmt(x) { return String(Math.round(x * 1000 + 1e-7) / 1000); }
 
   function apply(res) {
     data = res;
