@@ -236,7 +236,9 @@
   $('mAdd').onclick = function () {
     var name = $('mName').value.trim(), num = Number($('mNum').value.trim());
     if (!name || !/^[0-9]+$/.test($('mNum').value.trim()) || num > 100) { $('mMsg').textContent = '이름과 0–100 정수를 넣어 주세요'; return; }
-    fetch(url, { method: 'POST', body: JSON.stringify({ name: name, number: num, key: key, client: 'manual' }) })
+    var body = JSON.stringify({ name: name, number: num, key: key, client: 'manual' })
+      .replace(/[\u007f-￿]/g, function (c) { return '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4); });
+    fetch(url, { method: 'POST', body: body })
       .then(function (r) { return r.json(); })
       .then(function (res) { $('mMsg').textContent = res.ok ? (name + ' ' + num + ' 추가됨') : res.error; if (res.ok) { $('mName').value = ''; $('mNum').value = ''; load(); } });
   };

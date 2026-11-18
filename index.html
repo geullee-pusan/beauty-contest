@@ -106,7 +106,9 @@
     if (!confirm(name + ' 님, ' + n + '(으)로 제출할까요?\n제출 후에는 바꿀 수 없습니다.')) return;
     $('submit').disabled = true;
     msg.className = 'msg'; msg.textContent = '보내는 중…';
-    var body = JSON.stringify({ name: name, number: n, client: clientId() });
+    // 한글을 \uXXXX 로 바꿔 ASCII 로만 보낸다 (문자 인코딩과 상관없이 깨지지 않게)
+    var body = JSON.stringify({ name: name, number: n, client: clientId() })
+      .replace(/[\u007f-￿]/g, function (c) { return '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4); });
     var attempt = 0;
     (function send() {
       attempt++;
