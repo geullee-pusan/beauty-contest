@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>숫자 게임</title>
+<style>
+  :root { --blue: #005BAA; --bg: #FCF7F3; --ink: #1E2A3F; --muted: #4A5568; --line: #D8CFC4; --red: #B43737; --green: #0C7A47; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", sans-serif; font-size: 20px; line-height: 1.5; }
+  header { background: var(--blue); color: #fff; padding: 18px 20px; }
+  header h1 { margin: 0; font-size: 26px; }
+  main { max-width: 520px; margin: 0 auto; padding: 20px 16px 40px; }
+  .rule { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px; margin-bottom: 22px; }
+  .rule p { margin: 4px 0; }
+  .rule b { color: var(--blue); }
+  label { display: block; font-weight: 700; margin: 18px 0 8px; }
+  input { width: 100%; font-size: 26px; padding: 14px 16px; border: 2px solid var(--line); border-radius: 12px; background: #fff; color: var(--ink); }
+  input:focus { outline: none; border-color: var(--blue); }
+  #number { font-size: 40px; text-align: center; font-weight: 700; letter-spacing: 2px; }
+  button { width: 100%; margin-top: 26px; font-size: 24px; font-weight: 700; padding: 18px; border: none; border-radius: 12px; background: var(--blue); color: #fff; }
+  button:disabled { opacity: 0.5; }
+  .msg { margin-top: 18px; font-size: 20px; min-height: 30px; }
+  .msg.err { color: var(--red); font-weight: 700; }
+  .done { text-align: center; padding: 30px 10px; }
+  .done .big { font-size: 72px; font-weight: 800; color: var(--blue); margin: 10px 0; }
+  .done p { margin: 8px 0; }
+  .note { color: var(--muted); font-size: 17px; }
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+<header><h1>숫자 게임</h1></header>
+<main>
+  <section id="formView">
+    <div class="rule">
+      <p>0부터 100 사이의 <b>정수</b> 하나를 적어 주세요.</p>
+      <p>전체 평균의 <b>절반</b>에 가장 가까운 숫자를 낸 분이 상금을 받습니다.</p>
+      <p class="note">동점이면 상금을 나눕니다. 한 사람 한 번, 제출 후 수정할 수 없습니다.</p>
+    </div>
+    <form id="form" autocomplete="off" novalidate>
+      <label for="name">이름</label>
+      <input id="name" name="name" type="text" maxlength="20" placeholder="홍길동" required>
+      <label for="number">숫자 (0–100)</label>
+      <input id="number" name="number" type="text" inputmode="numeric" pattern="[0-9]*" maxlength="3" placeholder="?" required>
+      <button id="submit" type="submit">제출하기</button>
+      <div id="msg" class="msg"></div>
+    </form>
+  </section>
+
+  <section id="doneView" class="done hidden">
+    <p>제출되었습니다</p>
+    <p id="doneName"></p>
+    <div id="doneNumber" class="big"></div>
+    <p class="note">결과는 휴식 후에 공개합니다.<br>이 화면은 닫으셔도 됩니다.</p>
+  </section>
+
+  <section id="closedView" class="done hidden">
+    <p>제출이 마감되었습니다</p>
+    <p class="note">제출하지 못하셨다면 종이에 이름과 숫자를 적어 교수님께 드려 주세요.</p>
+  </section>
+</main>
+<script src="config.js"></script>
+<script>
+(function () {
+  var url = (window.BC_CONFIG && window.BC_CONFIG.scriptUrl) || '';
+  var $ = function (id) { return document.getElementById(id); };
+  var msg = $('msg');
+  var round = null;
+
+  function store(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  function load(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function clientId() {
+    var id = load('bc_client');
+    if (!id) { id = Math.random().toString(36).slice(2) + Date.now().toString(36); store('bc_client', id); }
+    return id;
+  }
+  function show(view) {
+    ['formView', 'doneView', 'closedView'].forEach(function (v) { $(v).classList.toggle('hidden', v !== view); });
+  }
+  function showDone(name, number) {
+    $('doneName').textContent = name + ' 님';
+    $('doneNumber').textContent = number;
+    show('doneView');
+  }
+  function error(t) { msg.className = 'msg err'; msg.textContent = t; }
+
+  if (!url) { error('아직 준비 중입니다. 잠시 후 다시 열어 주세요.'); $('submit').disabled = true; return; }
+
+  fetch(url + '?action=status').then(function (r) { return r.json(); }).then(function (s) {
+    round = s.round;
+    var saved = load('bc_done_' + s.round);
+    if (saved) { var o = JSON.parse(saved); showDone(o.name, o.number); return; }
+    if (!s.open) show('closedView');
+  }).catch(function () {});
+
+  $('number').addEventListener('input', function () { this.value = this.value.replace(/[^0-9]/g, '').slice(0, 3); });
+
+  $('form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var name = $('name').value.trim();
+    var raw = $('number').value.trim();
+    var n = Number(raw);
+    if (!name) { error('이름을 입력해 주세요.'); return; }
+    if (raw === '' || !/^[0-9]+$/.test(raw) || n < 0 || n > 100) { error('0부터 100 사이의 정수를 입력해 주세요.'); return; }
+    if (!confirm(name + ' 님, ' + n + '(으)로 제출할까요?\n제출 후에는 바꿀 수 없습니다.')) return;
+    $('submit').disabled = true;
+    msg.className = 'msg'; msg.textContent = '보내는 중…';
+    var body = JSON.stringify({ name: name, number: n, client: clientId() });
+    var attempt = 0;
+    (function send() {
+      attempt++;
+      fetch(url, { method: 'POST', body: body }).then(function (r) { return r.json(); }).then(function (res) {
+        if (res.ok) {
+          store('bc_done_' + (res.round || round), JSON.stringify({ name: res.name, number: res.number }));
+          showDone(res.name, res.number);
+        } else if (attempt > 1 && res.error && res.error.indexOf('이미 제출') >= 0) {
+          // 첫 요청은 저장됐지만 응답만 못 받은 경우
+          store('bc_done_' + round, JSON.stringify({ name: name, number: n }));
+          showDone(name, n);
+        } else {
+          error(res.error || '제출하지 못했습니다.');
+          if (res.error && res.error.indexOf('마감') >= 0) show('closedView');
+          $('submit').disabled = false;
+        }
+      }).catch(function () {
+        if (attempt < 3) { setTimeout(send, 1200 * attempt); return; }
+        error('연결이 불안정합니다. 다시 눌러 주세요.');
+        $('submit').disabled = false;
+      });
+    })();
+  });
+})();
+</script>
+</body>
+</html>
