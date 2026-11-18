@@ -10,7 +10,7 @@
   * { box-sizing: border-box; }
   body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
   header { background: var(--blue); color: #fff; padding: 14px 28px; display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
-  header h1 { margin: 0; font-size: 28px; flex: 1; }
+  header h1 { margin: 0; font-size: 28px; flex: 1; white-space: nowrap; }
   .status { font-size: 20px; font-weight: 700; padding: 6px 14px; border-radius: 999px; background: rgba(255,255,255,0.18); }
   header button { font-size: 18px; padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.6); background: transparent; color: #fff; cursor: pointer; }
   main { max-width: 1400px; margin: 0 auto; padding: 24px 28px 60px; }
@@ -29,7 +29,7 @@
   #chart { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 10px; }
   #chart svg { width: 100%; height: auto; display: block; }
   .next { position: fixed; right: 24px; bottom: 24px; font-size: 22px; font-weight: 700; padding: 14px 26px; border-radius: 12px; border: none; background: var(--blue); color: #fff; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-  .stage-hint { position: fixed; left: 24px; bottom: 30px; font-size: 16px; color: var(--muted); }
+  .stage-hint { position: fixed; left: 24px; bottom: 30px; font-size: 16px; color: var(--muted); background: var(--bg); padding: 4px 10px; border-radius: 6px; }
   .hidden { display: none !important; }
   details { margin-top: 40px; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 14px 18px; font-size: 18px; }
   details summary { cursor: pointer; font-weight: 700; }
