@@ -69,7 +69,7 @@
     <div class="stat s-zero hidden"><div class="label">0을 쓴 사람</div><div class="value" id="zero">–</div></div>
   </div>
   <div class="winner s-winner hidden">
-    <div class="label">상금을 받는 숫자</div>
+    <div class="label">상금을 받는 두 분</div>
     <div class="value" id="winNum">–</div>
     <div class="names" id="winNames"></div>
   </div>
@@ -136,9 +136,11 @@
     var sum = nums.reduce(function (a, b) { return a + b; }, 0);
     var mean = sum / n;
     var target = mean / 2;
-    var best = Infinity;
-    entries.forEach(function (e) { var d = Math.abs(e.number - target); if (d < best - 1e-9) best = d; });
-    var winners = entries.filter(function (e) { return Math.abs(Math.abs(e.number - target) - best) < 1e-9; });
+    // 가장 가까운 두 사람 (두 번째와 거리가 같은 동점자는 함께)
+    var dist = function (e) { return Math.abs(e.number - target); };
+    var byDist = entries.slice().sort(function (a, b) { return dist(a) - dist(b); });
+    var cut = dist(byDist[Math.min(1, n - 1)]);
+    var winners = byDist.filter(function (e) { return dist(e) <= cut + 1e-9; });
     var sorted = nums.slice().sort(function (a, b) { return a - b; });
     var median = n % 2 ? sorted[(n - 1) / 2] : (sorted[n / 2 - 1] + sorted[n / 2]) / 2;
     return { n: n, mean: mean, target: target, winners: winners, median: median,
@@ -175,7 +177,7 @@
     $('zero').textContent = s.zero + '명';
     var wnums = s.winners.map(function (w) { return w.number; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
     $('winNum').textContent = wnums.join(', ');
-    $('winNames').textContent = s.winners.map(function (w) { return w.name; }).join(', ') + (s.winners.length > 1 ? '  (상금을 나눕니다)' : '');
+    $('winNames').textContent = s.winners.map(function (w) { return w.name + ' (' + w.number + ')'; }).join(',  ') + (s.winners.length > 2 ? '  · 동점이 있어 상금을 나눕니다' : '');
     $('extra').textContent = '중앙값 ' + fmt(s.median) + '  ·  가장 작은 숫자 ' + s.min + '  ·  가장 큰 숫자 ' + s.max + '  ·  50 넘게 쓴 사람 ' + s.over50 + '명';
     drawChart(s);
   }
